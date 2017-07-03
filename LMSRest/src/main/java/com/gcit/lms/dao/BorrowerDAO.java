@@ -35,6 +35,11 @@ public class BorrowerDAO extends BaseDAO implements ResultSetExtractor<List<Borr
 		return holder.getKey().intValue();
 		}
 	
+	public void updateBorrower(Borrower borrower) throws SQLException{
+		template.update("update tbl_borrower set name =?, address = ?, phone = ? where cardNo = ?", new Object[] {
+				borrower.getName(), borrower.getAddress(), borrower.getPhone(),borrower.getCardNo()});
+	}
+	
 	public void updateBorrowerName(Borrower borrower) throws SQLException{
 		template.update("update tbl_borrower set name =? where cardNo = ?", new Object[] {borrower.getName(), borrower.getCardNo()});
 	}

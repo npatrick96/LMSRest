@@ -1,14 +1,8 @@
 package com.gcit.lms;
 
-
-//import java.util.Date;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
@@ -20,14 +14,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gcit.lms.dao.AuthorDAO;
+import com.gcit.lms.dao.BookCopyDAO;
 import com.gcit.lms.dao.BookDAO;
+import com.gcit.lms.dao.BookLoanDAO;
+import com.gcit.lms.dao.BorrowerDAO;
+import com.gcit.lms.dao.BranchDAO;
+import com.gcit.lms.dao.GenreDAO;
+import com.gcit.lms.dao.PublisherDAO;
 import com.gcit.lms.entity.Author;
 import com.gcit.lms.entity.Book;
 import com.gcit.lms.entity.BookCopy;
 import com.gcit.lms.entity.BookLoan;
 import com.gcit.lms.entity.Borrower;
 import com.gcit.lms.entity.Branch;
-import com.gcit.lms.entity.Genre;
 import com.gcit.lms.entity.Publisher;
 import com.gcit.lms.service.AdminService;
 import com.gcit.lms.service.BorrowerService;
@@ -47,9 +46,27 @@ public class HomeController {
 	
 	@Autowired
 	AuthorDAO adao;
-	
+
 	@Autowired
 	BookDAO bdao;
+
+	@Autowired
+	GenreDAO gdao;
+
+	@Autowired
+	PublisherDAO pdao;
+
+	@Autowired
+	BranchDAO brdao;
+
+	@Autowired
+	BorrowerDAO bodao;
+
+	@Autowired
+	BookLoanDAO bldao;
+	
+	@Autowired
+	BookCopyDAO bcdao;
 	
 	//================================================================================
     // Welcome page && Home menu
@@ -261,56 +278,11 @@ public class HomeController {
     // Books pages
     //================================================================================
 	
-	@RequestMapping(value = "/a_book", method = RequestMethod.GET)
-	public String a_book() {
-		return "a_book";
-	}
-	
-//	@RequestMapping(value = "/a_addbook", method = RequestMethod.GET)
-//	public String a_addBook(Model model) throws SQLException {
-//		List<Author> authors = adminService.getAllAuthors();
-//		List<Genre> genres = adminService.getAllGenres();
-//		List<Publisher> publishers = adminService.getAllPublishers();
-//		model.addAttribute("authors", authors);
-//		model.addAttribute("genres", genres);
-//		model.addAttribute("publishers", publishers);
-//		return "a_addbook";
+//	@RequestMapping(value = "/a_book", method = RequestMethod.GET)
+//	public String a_book() {
+//		return "a_book";
 //	}
-//
-//	@RequestMapping(value = "/addBook", method = RequestMethod.POST)
-//	public String addBook(Model model, @RequestParam("title") String title, 
-//			@RequestParam(value="authorId", required=false) String[] authorIds,
-//			@RequestParam(value="genreId", required=false) String[] genreIds, 
-//			@RequestParam(value="publisherId", required=false) String publisherId) throws SQLException {
-//		Book book = new Book();
-//		book.setTitle(title);
-//		if (authorIds != null && authorIds.length > 0) {
-//			ArrayList<Author> authors = new ArrayList<Author>();
-//			for (String a : authorIds) {
-//				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
-//				authors.add(author);
-//			}
-//			book.setAuthors(authors);
-//		}
-//		if (genreIds != null && genreIds.length > 0) {
-//			ArrayList<Genre> genres = new ArrayList<Genre>();
-//			for (String g : genreIds) {
-//				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
-//				genres.add(genre);
-//			}
-//			book.setGenres(genres);
-//		}
-//		if (publisherId != null  && publisherId != "") {
-//			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
-//			book.setPublisher(publisher);
-//		}
-//		adminService.saveBook(book);
-//		Integer booksCount = adminService.getBooksCount("");
-//		Integer pages = getPagesNumber(booksCount);
-//		model.addAttribute("pages", pages);
-//		model.addAttribute("books", adminService.getAllBooks(1, null));
-//		return "a_viewbooks";
-//	}
+//	
 	
 	@RequestMapping(value = "addBook", method = RequestMethod.POST, consumes="application/json")
 	public String addBook(@RequestBody Book book) throws SQLException {
@@ -321,25 +293,41 @@ public class HomeController {
 	@RequestMapping(value = "editBook", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
 	public List<Book> editBook(@RequestBody Book book) throws SQLException {
-		//bdao.addBook(book);
 		bdao.updateBook(book);
 		return bdao.readAllBooks();
+	}
+	
+	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET, produces="application/json")
+	public List<Book> a_viewBooks() throws SQLException { 
+		List<Book> books =  bdao.readAllBooks();
+		for (Book b: books){
+			b.setAuthors(adao.readAllAuthorsByBookId(b.getBookId()));
+			b.setGenres(gdao.readAllGenresByBookId(b.getBookId()));
+			b.setPublisher(pdao.readPublisherByBookId(b.getBookId()));
+		}
+		return books;
+	}
+	
+	@RequestMapping(value = "/a_viewbooks/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<Book> a_viewBooks(@PathVariable Integer pageNo) throws SQLException { 
+		List<Book> books =  bdao.readAllBooks(pageNo);
+		for (Book b: books){
+			b.setAuthors(adao.readAllAuthorsByBookId(b.getBookId()));
+			b.setGenres(gdao.readAllGenresByBookId(b.getBookId()));
+			b.setPublisher(pdao.readPublisherByBookId(b.getBookId()));
+		}
+		return books;
 	}
 	
 	@RequestMapping(value = "/a_viewbooks/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
 	public List<Book> a_viewBooks(@PathVariable Integer pageNo, 
 			@PathVariable String searchString) throws SQLException { 
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
 		List<Book> books =  bdao.readAllBooksByName(pageNo, searchString);
 		for (Book b: books){
 			b.setAuthors(adao.readAllAuthorsByBookId(b.getBookId()));
-			// do the same for genres
-			// do the same for publisher
+			b.setGenres(gdao.readAllGenresByBookId(b.getBookId()));
+			b.setPublisher(pdao.readPublisherByBookId(b.getBookId()));
 		}
-		
 		return books;
 	}
 	
@@ -348,375 +336,119 @@ public class HomeController {
 		bdao.deleteBook(book);
 		return "Book deleted successfully!";
 	}
-	
-//	@RequestMapping(value = "/a_editbook", method = RequestMethod.GET)
-//	public String a_editBook(Model model, 
-//			@RequestParam("bookId") Integer bookId, 
-//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-//		Book book = adminService.getBookByPK(bookId);
-//		model.addAttribute("pageNo", pageNo);
-//		model.addAttribute("searchString", searchString);
-//		model.addAttribute("book", book);
-//		model.addAttribute("authors", adminService.getAllAuthors());
-//		model.addAttribute("genres", adminService.getAllGenres());
-//		model.addAttribute("publishers", adminService.getAllPublishers());
-//		return "a_editbook";
-//	}
-//	
-//	@RequestMapping(value = "/editBook", method = RequestMethod.POST)
-//	public String editBook(Model model, @RequestParam("bookId") Integer bookId,
-//			@RequestParam("title") String title, 
-//			@RequestParam(value="authorId", required=false) String[] authorIds,
-//			@RequestParam(value="genreId", required=false) String[] genreIds, 
-//			@RequestParam(value="publisherId", required=false) String publisherId, 
-//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-//		if (searchString == null){
-//			searchString = "";}
-//		if(pageNo == null){
-//			pageNo = 1;}
-//		
-//		Book book = adminService.getBookByPK(bookId);
-//		book.setTitle(title);
-//		
-//		if (authorIds != null && authorIds.length > 0){
-//			ArrayList<Author> authors = new ArrayList<Author>();
-//			for (String a: authorIds){
-//				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
-//				authors.add(author);
-//			}
-//			book.setAuthors(authors);
-//		}else{book.setAuthors(null);}
-//		if (genreIds != null && genreIds.length > 0){
-//			ArrayList<Genre> genres = new ArrayList<Genre>();
-//			for (String g: genreIds){
-//				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
-//				genres.add(genre);
-//			}
-//			book.setGenres(genres);
-//		}else{book.setGenres(null);}
-//		if (publisherId != null && publisherId != ""){
-//			if (Integer.parseInt(publisherId) != 0){
-//			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
-//			book.setPublisher(publisher);
-//			}else{
-//				book.setPublisher(null);
-//			}
-//		}else{}
-//		
-//		adminService.saveBook(book);
-//		model.addAttribute("books", adminService.getAllBooks(pageNo, searchString));
-//		Integer booksCount = adminService.getBooksCount(searchString);
-//		Integer pages = getPagesNumber(booksCount);
-//		model.addAttribute("pages", pages);
-//		model.addAttribute("pageNo", pageNo);
-//		model.addAttribute("searchString", searchString);
-//		return "a_viewbooks";
-//	}
-	
-//	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET)
-//	public String a_viewBooks(Model model) throws SQLException { 
-//		//GENERIC FOR VIEW PAGES WITH NO SEARCH OR PAGINATION
-//		model.addAttribute("books", adminService.getAllBooks(1, null));
-//		Integer booksCount = adminService.getBooksCount("");
-//		Integer pages = getPagesNumber(booksCount);
-//		model.addAttribute("pages", pages);
-//		return "a_viewbooks";
-//		}
-	
-	@RequestMapping(value = "/deleteBook", method = RequestMethod.GET)
-	public String deleteBook(Model model, 
-			@RequestParam("bookId") Integer bookId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Book book = adminService.getBookByPK(bookId);
-		adminService.deleteBook(book);
-		//System.out.println(searchString + searchString.length());
-		model.addAttribute("books", adminService.getAllBooks(pageNo, searchString));
-		Integer booksCount = adminService.getBooksCount(searchString);
-		Integer pages = getPagesNumber(booksCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("pages", pages);
-		return "a_viewbooks";
-	}
-	
-	
-//	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET)
-//	public String a_viewBooks(Model model, 
-//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException { 
-//		Integer booksCount = 0;
-//		List<Book> books = new ArrayList<>();
-//		if (searchString == null){
-//			searchString = "";}
-//		if(pageNo == null){
-//			pageNo = 1;}
-//		books = adminService.getAllBooks(pageNo, searchString);
-//		booksCount = adminService.getBooksCount(searchString); 
-//		Integer pages = getPagesNumber(booksCount);
-//		model.addAttribute("pageNo", pageNo);
-//		return "a_viewbooks";
-//	}
-	
-	
-	
+			
 	
 	//================================================================================
     // Authors pages
     //================================================================================
 
 	
-	@RequestMapping(value = "/a_author", method = RequestMethod.GET)
-	public String a_author() {
-		return "a_author";
+//	@RequestMapping(value = "/a_author", method = RequestMethod.GET)
+//	public String a_author() {
+//		return "a_author";
+//	}
+	
+	@RequestMapping(value = "addAuthor", method = RequestMethod.POST, consumes="application/json")
+	public String addAuthor(@RequestBody Author author) throws SQLException {
+		adao.addAuthor(author);
+		return "Author Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "/a_addauthor", method = RequestMethod.GET)
-	public String a_addAuthor(Model model) throws SQLException {
-		List<Book> books = adminService.getAllBooks();
-		model.addAttribute("books", books);
-		return "a_addauthor";
+	@RequestMapping(value = "editAuthor", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Author> editBook(@RequestBody Author author) throws SQLException {
+		adao.updateAuthor(author);
+		return adao.readAllAuthors();
 	}
 	
-	@RequestMapping(value = "/addAuthor", method = RequestMethod.POST)
-	public String addAuthor(Model model, 
-			@RequestParam("authorName") String authorName,
-			@RequestParam(value ="bookId", required = false) String[] bookIds) throws SQLException {
-		Author author = new Author();
-		author.setAuthorName(authorName);
-		if (bookIds != null && bookIds.length > 0) {
-			ArrayList<Book> books = new ArrayList<Book>();
-			for (String b: bookIds){
-				Book book = adminService.getBookByPK(Integer.parseInt(b));
-				books.add(book);
-			}
-		author.setBooks(books);
+	@RequestMapping(value = "/a_viewauthors/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<Author> a_viewAuthors(@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException { 
+		List<Author> authors =  adao.readAllAuthorsByName(pageNo, searchString);
+		for (Author a: authors){
+			a.setBooks(bdao.readAllBooksByAuthorId(a.getAuthorId()));
 		}
-		adminService.saveAuthor(author);
-		Integer authorsCount = adminService.getAuthorsCount("");
-		Integer pages = getPagesNumber(authorsCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("authors", adminService.getAllAuthors(1, null));
-		return "a_viewauthors";
+		return authors;
 	}
 	
-	@RequestMapping(value = "/a_editauthor", method = RequestMethod.GET)
-	public String a_editAuthor(Model model, 
-			@RequestParam("authorId") Integer authorId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		Author author = adminService.getAuthorByPK(authorId);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("author", author);
-		return "a_editauthor";
-	}
-	
-	@RequestMapping(value = "/editAuthor", method = RequestMethod.POST)
-	public String editAuthor(Model model, 
-			@RequestParam("authorId") Integer authorId,
-			@RequestParam("authorName") String authorName, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Author author = adminService.getAuthorByPK(authorId);
-		author.setAuthorName(authorName);
-		adminService.saveAuthor(author);
-		model.addAttribute("authors", adminService.getAllAuthors(pageNo, searchString));
-		Integer authorsCount = adminService.getAuthorsCount(searchString);
-		Integer pages = getPagesNumber(authorsCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		return "a_viewauthors";
-	}	
-	
-	@RequestMapping(value = "/deleteAuthor", method = RequestMethod.GET)
-	public String deleteAuthor(Model model, 
-			@RequestParam("authorId") Integer authorId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Author author = adminService.getAuthorByPK(authorId);
-		adminService.deleteAuthor(author);
-		model.addAttribute("authors", adminService.getAllAuthors(pageNo, searchString));
-		Integer authorsCount = adminService.getAuthorsCount(searchString);
-		Integer pages = getPagesNumber(authorsCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("pages", pages);
-		return "a_viewauthors";
-	}
-	
-	@RequestMapping(value = "/a_viewauthors", method = RequestMethod.GET)
-	public String a_viewAuthors(Model model, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		List<Author> authors = new ArrayList<>();
-		Integer authorsCount = 0;
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		authors = adminService.getAllAuthors(pageNo, searchString);
-		authorsCount = adminService.getAuthorsCount(searchString);
-		Integer pages = getPagesNumber(authorsCount);
-		model.addAttribute("authors", authors);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		return "a_viewauthors";
-	}
-	
-	@RequestMapping(value = "/searchAuthors", method = RequestMethod.GET) 
-	public void searchAuthors(Model model, 
-			@RequestParam("searchString") String searchString, 
-			HttpServletResponse response) throws SQLException, IOException {
-		if (searchString == null) {
-			searchString = "";
+	@RequestMapping(value = "/a_viewauthors/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<Author> a_viewAuthors(@PathVariable Integer pageNo) throws SQLException { 
+		List<Author> authors =  adao.readAllAuthors(pageNo);
+		for (Author a: authors){
+			a.setBooks(bdao.readAllBooksByAuthorId(a.getAuthorId()));
 		}
-		
-		Integer pageNo = 1;
-		Integer authorsCount = adminService.getAuthorsCount(searchString);
-		Integer pages = getPagesNumber(authorsCount);
-		
-		List<Author> authors = adminService.getAllAuthors(pageNo, searchString);
-		StringBuffer strBuf = new StringBuffer();
-		
-		strBuf.append("<nav aria-label='Page navigation'><ul class='pagination'><li><a href='#' aria-label='Previous'><span aria-hidden='true'>&laquo;</span></a></li>");
-		for (int i = 1; i<= pages; i++){
-			strBuf.append("<li><a href='a_viewauthors?pageNo="+i+"&searchString="+searchString+"'>"+i+"</a></li>");
+		return authors;
+	}
+	
+	@RequestMapping(value = "/a_viewauthors", method = RequestMethod.GET, produces="application/json")
+	public List<Author> a_viewAuthors() throws SQLException { 
+		List<Author> authors =  adao.readAllAuthors();
+		for (Author a: authors){
+			a.setBooks(bdao.readAllBooksByAuthorId(a.getAuthorId()));
 		}
-		strBuf.append("<li><a href='#' aria-label='Next'><span aria-hidden='true'>&raquo;</span></a></li></ul></nav>");
-		strBuf.append("<table class='table' id='authorsTable'>");
-		
-		strBuf.append("<tr><th>Author ID</th><th>Author Name</th><th>Books by Author</th><th>Edit</th><th>Delete</th></tr>");
-		for (Author a : authors) {
-			int idx = authors.indexOf(a) + 1;
-			strBuf.append("<tr><td>" + idx
-					+ "</td><td>" + a.getAuthorName() + "</td><td>");
-			for (Book b : a.getBooks()) {
-				strBuf.append(" '"+b.getTitle() + "' ");
-			}
-			strBuf.append("</td><td><button type='button' class='btn btn-sm btn-primary'data-toggle='modal' data-target='#editAuthorModal' href='a_editauthor?authorId="
-					+ a.getAuthorId() + "'>Edit!</button></td>");
-			strBuf.append("<td><button type='button' class='btn btn-sm btn-danger' onclick='javascript:location.href='deleteAuthor?authorId="
-					+ a.getAuthorId()
-					+ "''>Delete!</button></td></tr>");
-		}
-		strBuf.append("</table>");
-		response.getWriter().write(strBuf.toString());
+		return authors;
+	}
+	
+	@RequestMapping(value = "deleteAuthor", method = RequestMethod.POST, consumes="application/json ")
+	public String deleteAuthor(@RequestBody Author author) throws SQLException {
+		adao.deleteAuthor(author);
+		return "Author deleted successfully!";
 	}
 	
 	//================================================================================
     // Borrowers pages
     //================================================================================
 	
-	@RequestMapping(value = "/a_borrower", method = RequestMethod.GET)
-	public String a_borrower() {
-		return "a_borrower";
+//	@RequestMapping(value = "/a_borrower", method = RequestMethod.GET)
+//	public String a_borrower() {
+//		return "a_borrower";
+//	}
+
+	@RequestMapping(value = "addBorrower", method = RequestMethod.POST, consumes="application/json")
+	public String addBorrower(@RequestBody Borrower borrower) throws SQLException {
+		bodao.addBorrower(borrower);
+		return "borrower Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "/a_addborrower", method = RequestMethod.GET)
-	public String a_addBorrower(Model model) throws SQLException {
-		return "a_addborrower";
+	@RequestMapping(value = "editborrower", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Borrower> editBook(@RequestBody Borrower borrower) throws SQLException {
+		bodao.updateBorrower(borrower);
+		return bodao.readAllBorrowers();
 	}
 	
-	@RequestMapping(value = "/addBorrower", method = RequestMethod.POST)
-	public String addBorrower(Model model, 
-			@RequestParam("borrowerName") String borrowerName,
-			@RequestParam(value = "borrowerAddress", required=false) String borrowerAddress,
-			@RequestParam(value = "borrowerPhone", required=false) String borrowerPhone) throws SQLException {
-		Borrower borrower = new Borrower();
-		borrower.setName(borrowerName);
-		if (borrowerAddress != null && borrowerAddress.length()>0){
-			borrower.setAddress(borrowerAddress);
-		}else{}
-		if (borrowerPhone != null && borrowerPhone.length() > 0){
-			borrower.setPhone(borrowerPhone);
-		}else{}
-		adminService.saveBorrower(borrower);
-		Integer borrowersCount = adminService.getBorrowersCount("");
-		Integer pages = getPagesNumber(borrowersCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("borrowers", adminService.getAllBorrowers());
-		return "a_viewborrowers";
-	}
-	
-	@RequestMapping(value = "/a_editborrower", method = RequestMethod.GET)
-	public String a_editBorrower(Model model, 
-			@RequestParam("cardNo") Integer cardNo, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		Borrower borrower = adminService.getBorrowerByPK(cardNo);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("borrower", borrower);
-		return "a_editborrower";
-	}
-	
-	@RequestMapping(value = "/editBorrower", method = RequestMethod.POST)
-	public String editBorrower(Model model, 
-			@RequestParam("cardNo") Integer cardNo,
-			@RequestParam("borrowerName") String borrowerName, 
-			@RequestParam(value = "borrowerAddress", required = false) String borrowerAddress,
-			@RequestParam(value = "borrowerPhone", required = false) String borrowerPhone,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Borrower borrower = adminService.getBorrowerByPK(cardNo);
-		borrower.setName(borrowerName);
-		if (borrowerAddress != null && borrowerAddress.length() > 0){
-			borrower.setAddress(borrowerAddress);
+	@RequestMapping(value = "/a_viewborrowers/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<Borrower> a_viewborrowers(@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException { 
+		List<Borrower> borrowers =  bodao.readAllBorrowersByName(pageNo, searchString);
+		for (Borrower bo: borrowers){
+			bo.setBookLoans(bldao.readAllBookLoansByCardNo(bo.getCardNo()));
 		}
-		if (borrowerPhone != null && borrowerPhone.length() > 0){
-			borrower.setPhone(borrowerPhone);
-		}
-		adminService.saveBorrower(borrower);
-		return a_viewBorrowers(model,pageNo);
-	}	
-	
-	@RequestMapping(value = "/deleteBorrower", method = RequestMethod.GET)
-	public String deleteBorrower(Model model, 
-			@RequestParam("cardNo") Integer cardNo, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Borrower borrower = adminService.getBorrowerByPK(cardNo);
-		adminService.deleteBorrower(borrower);
-		return a_viewBorrowers(model,pageNo);
+		return borrowers;
 	}
 	
-	@RequestMapping(value = "/a_viewborrowers", method = RequestMethod.GET)
-	public String a_viewBorrowers(Model model,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo) throws SQLException {
-		if(pageNo == null){
-			pageNo = 1;}
-		model.addAttribute("borrowers", adminService.getAllBorrowers(pageNo, null));
-		Integer borrowersCount = adminService.getBorrowersCount("");
-		Integer pages = getPagesNumber(borrowersCount);
-		model.addAttribute("pages", pages);
-		return "a_viewborrowers";
+	@RequestMapping(value = "/a_viewborrowers/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<Borrower> a_viewborrowers(@PathVariable Integer pageNo) throws SQLException { 
+		List<Borrower> borrowers =  bodao.readAllBorrowers(pageNo);
+		for (Borrower bo: borrowers){
+			bo.setBookLoans(bldao.readAllBookLoansByCardNo(bo.getCardNo()));
+		}
+		return borrowers;
+	}
+	
+	@RequestMapping(value = "/a_viewborrowers", method = RequestMethod.GET, produces="application/json")
+	public List<Borrower> a_viewborrowers() throws SQLException { 
+		List<Borrower> borrowers =  bodao.readAllBorrowers();
+		for (Borrower bo: borrowers){
+			bo.setBookLoans(bldao.readAllBookLoansByCardNo(bo.getCardNo()));
+		}
+		return borrowers;
+	}
+	
+	@RequestMapping(value = "deleteBorrower", method = RequestMethod.POST, consumes="application/json ")
+	public String deleteBorrower(@RequestBody Borrower borrower) throws SQLException {
+		bodao.deleteBorrower(borrower);
+		return "borrower deleted successfully!";
 	}
 	
 	
