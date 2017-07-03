@@ -170,9 +170,9 @@ public class HomeController {
 		return "b_pickaction";
 	}
 	
-	// return book copy
+	// TODO return book copy  // COPY STUFF from borrower service
 	
-			// check out book copy
+   //  TODO check out book copy
 	
 	@RequestMapping(value = "/returnBook", method = RequestMethod.GET)
 	public String returnBook(Model model,@RequestParam("cardNo") Integer cardNo,
