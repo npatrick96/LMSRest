@@ -88,7 +88,7 @@ public class BorrowerService {
 	}
 	
 	public List<Branch> getAllBranches() throws SQLException {
-		return brdao.readAllBranchs();
+		return brdao.readAllBranches();
 	}
 	
 	public List<Book> getAllBooksOwned(Branch branch) throws SQLException {

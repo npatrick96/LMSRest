@@ -36,7 +36,7 @@ public class LibrarianService {
 	}
 
 	public List<Branch> getAllBranches() throws SQLException {
-			return brdao.readAllBranchs();
+			return brdao.readAllBranches();
 	}
 
 	@Transactional
@@ -81,7 +81,7 @@ public class LibrarianService {
 		if (branch.getBranchId() != null) {
 			brdao.updateBranchName(branch);
 			if (branch.getBranchAddress() != null) {
-				brdao.updateBranchNameAndAddress(branch);
+				brdao.updateBranch(branch);
 			} else {
 				brdao.updateBranchName(branch);
 			}

@@ -283,7 +283,7 @@ public class AdminService {
 	}
 
 	public List<Branch> getAllBranches() throws SQLException {
-		List<Branch> branches= brdao.readAllBranchs();
+		List<Branch> branches= brdao.readAllBranches();
 		for (Branch br: branches){
 			br.setBooks(bdao.readAllBooksByBranchId(br.getBranchId()));
 			br.setBookLoans(bldao.readAllBookLoansByBranchId(br.getBranchId()));
@@ -319,7 +319,7 @@ public class AdminService {
 			if (branch.getBranchId() != null) {
 				brdao.updateBranchName(branch);
 				if (branch.getBranchAddress() != null){
-					brdao.updateBranchNameAndAddress(branch);
+					brdao.updateBranch(branch);
 					}else{
 						brdao.updateBranchName(branch);
 					}

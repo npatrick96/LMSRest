@@ -48,8 +48,9 @@ public class BranchDAO extends BaseDAO implements ResultSetExtractor<List<Branch
 		template.update("update tbl_library_branch set branchAddress =? where branchId = ?", new Object[] {branchAddress, branchId});
 	}
 	
-	public void updateBranchNameAndAddress(Branch branch) throws SQLException{
-		template.update("update tbl_library_branch set branchName =?, branchAddress =? where branchId = ?", new Object[] {branch.getBranchName(), branch.getBranchAddress(),branch.getBranchId()});
+	public void updateBranch(Branch branch) throws SQLException{
+		template.update("update tbl_library_branch set branchName =?, branchAddress =? where branchId = ?", new Object[] {
+				branch.getBranchName(), branch.getBranchAddress(),branch.getBranchId()});
 	}
 	
 	public Integer getBranchesCount() throws SQLException{
@@ -86,7 +87,7 @@ public class BranchDAO extends BaseDAO implements ResultSetExtractor<List<Branch
 		template.update("delete from tbl_library_branch where branchId = ?", new Object[] {branch.getBranchId()});
 	}
 	
-	public List<Branch> readAllBranchs() throws SQLException{
+	public List<Branch> readAllBranches() throws SQLException{
 		return (List<Branch>) template.query("select * from tbl_library_branch", this);
 	}
 	

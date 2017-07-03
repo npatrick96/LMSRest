@@ -451,194 +451,119 @@ public class HomeController {
 		return "borrower deleted successfully!";
 	}
 	
-	
-	
 	//================================================================================
     // Branches pages
     //================================================================================
 	
-	@RequestMapping(value = "/a_branch", method = RequestMethod.GET)
-	public String a_branch() {
-		return "a_branch";
+//	@RequestMapping(value = "/a_branch", method = RequestMethod.GET)
+//	public String a_branch() {
+//		return "a_branch";
+//	}
+	
+	@RequestMapping(value = "addBranch", method = RequestMethod.POST, consumes="application/json")
+	public String addBranch(@RequestBody Branch branch) throws SQLException {
+		brdao.addBranch(branch);
+		return "branch Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "/a_addbranch", method = RequestMethod.GET)
-	public String a_addBranch(Model model) throws SQLException {
-		return "a_addbranch";
+	@RequestMapping(value = "editbranch", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Branch> editBook(@RequestBody Branch branch) throws SQLException {
+		brdao.updateBranch(branch);
+		return brdao.readAllBranches();
 	}
 	
-	@RequestMapping(value = "/addBranch", method = RequestMethod.POST)
-	public String addBranch(Model model, 
-			@RequestParam("branchName") String branchName,
-			@RequestParam(value = "branchAddress", required=false) String branchAddress) throws SQLException {
-		Branch branch = new Branch();
-		branch.setBranchName(branchName);
-		if (branchAddress != null && branchAddress.length()>0){
-			branch.setBranchAddress(branchAddress);
-		}else{}
-		adminService.saveBranch(branch);
-		Integer branchesCount = adminService.getBranchesCount("");
-		Integer pages = getPagesNumber(branchesCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("branches", adminService.getAllBranches());
-		return "a_viewbranches";
-	}
-	
-	@RequestMapping(value = "/a_editbranch", method = RequestMethod.GET)
-	public String a_editBranch(Model model, 
-			@RequestParam("branchId") Integer branchId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		Branch branch = adminService.getBranchByPK(branchId);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("branch", branch);
-		return "a_editbranch";
-	}
-	
-	@RequestMapping(value = "/editBranch", method = RequestMethod.POST)
-	public String editBranch(Model model, 
-			@RequestParam("branchId") Integer branchId,
-			@RequestParam("branchName") String branchName, 
-			@RequestParam(value = "branchAddress", required = false) String branchAddress,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Branch branch = adminService.getBranchByPK(branchId);
-		branch.setBranchName(branchName);
-		if (branchAddress != null && branchAddress.length() > 0){
-			branch.setBranchAddress(branchAddress);
+	@RequestMapping(value = "/a_viewbranches/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<Branch> a_viewbranches(@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException { 
+		List<Branch> branches =  brdao.readAllBranchesByName(pageNo, searchString);
+		for (Branch br: branches){
+			br.setBooks(bdao.readAllBooksByBranchId(br.getBranchId()));
+			br.setBookLoans(bldao.readAllBookLoansByBranchId(br.getBranchId()));
 		}
-		adminService.saveBranch(branch);
-		return a_viewBranches(model,pageNo);
-	}	
-	
-	@RequestMapping(value = "/deleteBranch", method = RequestMethod.GET)
-	public String deleteBranch(Model model, 
-			@RequestParam("branchId") Integer branchId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Branch branch = adminService.getBranchByPK(branchId);
-		adminService.deleteBranch(branch);
-		return a_viewBranches(model,pageNo);
+		return branches;
 	}
 	
-	@RequestMapping(value = "/a_viewbranches", method = RequestMethod.GET)
-	public String a_viewBranches(Model model,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo) throws SQLException {
-		if(pageNo == null){
-			pageNo = 1;}
-		model.addAttribute("branches", adminService.getAllBranches(pageNo, null));
-		Integer branchesCount = adminService.getBranchesCount("");
-		Integer pages = getPagesNumber(branchesCount);
-		model.addAttribute("pages", pages);
-		return "a_viewbranches";
+	@RequestMapping(value = "/a_viewbranches/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<Branch> a_viewbranches(@PathVariable Integer pageNo) throws SQLException { 
+		List<Branch> branches =  brdao.readAllBranches(pageNo);
+		for (Branch br: branches){
+			br.setBooks(bdao.readAllBooksByBranchId(br.getBranchId()));
+			br.setBookLoans(bldao.readAllBookLoansByBranchId(br.getBranchId()));
+		}
+		return branches;
+	}
+	
+	@RequestMapping(value = "/a_viewbranches", method = RequestMethod.GET, produces="application/json")
+	public List<Branch> a_viewbranches() throws SQLException { 
+		List<Branch> branches =  brdao.readAllBranches();
+		for (Branch br: branches){
+			br.setBooks(bdao.readAllBooksByBranchId(br.getBranchId()));
+			br.setBookLoans(bldao.readAllBookLoansByBranchId(br.getBranchId()));
+		}
+		return branches;
+	}
+	
+	@RequestMapping(value = "deleteBranch", method = RequestMethod.POST, consumes="application/json ")
+	public String deleteBranch(@RequestBody Branch branch) throws SQLException {
+		brdao.deleteBranch(branch);
+		return "branch deleted successfully!";
 	}
 	
 	//================================================================================
     // Publishers pages
     //================================================================================
 	
-	@RequestMapping(value = "/a_publisher", method = RequestMethod.GET)
-	public String a_publisher() {
-		return "a_publisher";
+//	@RequestMapping(value = "/a_publisher", method = RequestMethod.GET)
+//	public String a_publisher() {
+//		return "a_publisher";
+//	}
+	
+	@RequestMapping(value = "addPublisher", method = RequestMethod.POST, consumes="application/json")
+	public String addPublisher(@RequestBody Publisher publisher) throws SQLException {
+		pdao.addPublisher(publisher);
+		return "publisher Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "/a_addpublisher", method = RequestMethod.GET)
-	public String a_addPublisher() {
-		return "a_addpublisher";
+	@RequestMapping(value = "editpublisher", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Publisher> editBook(@RequestBody Publisher publisher) throws SQLException {
+		pdao.updatePublisher(publisher);
+		return pdao.readAllPublishers();
 	}
 	
-	@RequestMapping(value = "/addPublisher", method = RequestMethod.POST)
-	public String addPublisher(Model model, 
-			@RequestParam("publisherName") String publisherName,
-			@RequestParam(value = "publisherAddress", required=false) String publisherAddress,
-			@RequestParam(value = "publisherPhone", required=false) String publisherPhone) throws SQLException {
-		Publisher publisher = new Publisher();
-		publisher.setPublisherName(publisherName);
-		if (publisherAddress != null && publisherAddress.length()>0){
-			publisher.setPublisherAddress(publisherAddress);
-		}else{}
-		if (publisherPhone != null && publisherPhone.length()>0){
-			publisher.setPublisherPhone(publisherPhone);
-		}else{}
-		adminService.savePublisher(publisher);
-		Integer publishersCount = adminService.getPublishersCount("");
-		Integer pages = getPagesNumber(publishersCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("publishers", adminService.getAllPublishers());
-		return "a_viewpublishers";
-	}
-	
-	@RequestMapping(value = "/a_editpublisher", method = RequestMethod.GET)
-	public String a_editPublisher(Model model, 
-			@RequestParam("publisherId") Integer publisherId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		Publisher publisher = adminService.getPublisherByPK(publisherId);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("publisher", publisher);
-		return "a_editpublisher";
-	}
-	
-	@RequestMapping(value = "/editPublisher", method = RequestMethod.POST)
-	public String editPublisher(Model model, 
-			@RequestParam("publisherId") Integer publisherId,
-			@RequestParam("publisherName") String publisherName, 
-			@RequestParam(value = "publisherAddress", required = false) String publisherAddress,
-			@RequestParam(value = "publisherPhone", required = false) String publisherPhone,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Publisher publisher = adminService.getPublisherByPK(publisherId);
-		publisher.setPublisherName(publisherName);
-		if (publisherAddress != null && publisherAddress.length() > 0){
-			publisher.setPublisherAddress(publisherAddress);
+	@RequestMapping(value = "/a_viewpublishers/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<Publisher> a_viewpublishers(@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException { 
+		List<Publisher> publishers =  pdao.readAllPublishersByName(pageNo, searchString);
+		for (Publisher p:publishers){
+			p.setBooks(bdao.readAllBooksByPublisherId(p.getPublisherId()));
 		}
-		if (publisherPhone != null && publisherPhone.length() > 0){
-			publisher.setPublisherPhone(publisherPhone);
-		}
-		adminService.savePublisher(publisher);
-		return a_viewPublishers(model,pageNo);
-	}	
-	
-	@RequestMapping(value = "/deletePublisher", method = RequestMethod.GET)
-	public String deletePublisher(Model model, 
-			@RequestParam("publisherId") Integer publisherId,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		Publisher publisher = adminService.getPublisherByPK(publisherId);
-		adminService.deletePublisher(publisher);
-		return a_viewPublishers(model,pageNo);
+		return publishers;
 	}
 	
-	@RequestMapping(value = "/a_viewpublishers", method = RequestMethod.GET)
-	public String a_viewPublishers(Model model,
-			@RequestParam(value = "pageNo", required = false) Integer pageNo) throws SQLException {
-		if(pageNo == null){
-			pageNo = 1;}
-		model.addAttribute("publishers", adminService.getAllPublishers(pageNo, null));
-		Integer publishersCount = adminService.getPublishersCount("");
-		//System.out.println(publishersCount);
-		Integer pages = getPagesNumber(publishersCount);
-		//System.out.println(pages);
-		model.addAttribute("pages", pages);
-		return "a_viewpublishers";
+	@RequestMapping(value = "/a_viewpublishers/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<Publisher> a_viewpublishers(@PathVariable Integer pageNo) throws SQLException { 
+		List<Publisher> publishers =  pdao.readAllPublishers(pageNo);
+		for (Publisher p:publishers){
+			p.setBooks(bdao.readAllBooksByPublisherId(p.getPublisherId()));
+		}
+		return publishers;
+	}
+	
+	@RequestMapping(value = "/a_viewpublishers", method = RequestMethod.GET, produces="application/json")
+	public List<Publisher> a_viewpublishers() throws SQLException { 
+		List<Publisher> publishers =  pdao.readAllPublishers();
+		for (Publisher p:publishers){
+			p.setBooks(bdao.readAllBooksByPublisherId(p.getPublisherId()));
+		}
+		return publishers;
+	}
+	
+	@RequestMapping(value = "deletePublisher", method = RequestMethod.POST, consumes="application/json ")
+	public String deletePublisher(@RequestBody Publisher publisher) throws SQLException {
+		pdao.deletePublisher(publisher);
+		return "publisher deleted successfully!";
 	}
 	
 	//================================================================================

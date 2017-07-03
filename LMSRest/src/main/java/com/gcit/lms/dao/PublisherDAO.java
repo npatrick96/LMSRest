@@ -59,6 +59,11 @@ public class PublisherDAO extends BaseDAO implements ResultSetExtractor<List<Pub
 		template.update("update tbl_publisher set publisherAddress =? where publisherId = ?", new Object[] {publisher.getPublisherAddress(), publisher.getPublisherId()});
 	}
 	
+	public void updatePublisher(Publisher publisher) throws SQLException{
+		template.update("update tbl_publisher set publisherAddress =?, publisherName =?, publisherPhone =? where publisherId = ?", new Object[] {
+				publisher.getPublisherAddress(),publisher.getPublisherName(), publisher.getPublisherPhone(), publisher.getPublisherId()});
+	}
+	
 	public void updatePublisherAddress(Integer publisherId, String publisherAddress) throws SQLException{
 		template.update("update tbl_publisher set publisherAddress =? where publisherId = ?", new Object[] {publisherAddress,publisherId});
 	}
