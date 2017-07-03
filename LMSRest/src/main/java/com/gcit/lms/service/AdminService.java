@@ -419,9 +419,9 @@ public class AdminService {
 		}
 	}
 
-	public List<BookLoan> getAllDueBookLoans(Integer pageNo, Integer cardNo)
+	public List<BookLoan> getAllDueBookLoans(Integer cardNo)
 			throws SQLException {
-		return bldao.readBookLoansByBorrowerCardNo(pageNo, cardNo);
+		return bldao.readAllDueBookLoansByCardNo(cardNo);
 	}
 
 	public Integer getBookLoansCount(String searchString) throws SQLException {

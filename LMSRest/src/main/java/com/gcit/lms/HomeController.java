@@ -134,56 +134,29 @@ public class HomeController {
     // BORROWER SERVICES
     //================================================================================
 	
-	// view book copies
+	@RequestMapping(value = "/b_viewbookloansbyuser", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> b_viewbookloansbyuser(@RequestBody Borrower borrower) throws SQLException {
+		return bldao.readAllDueBookLoansByBorrower(borrower);
+	}
 	
-		// return book copy
-		
-		// check out book copy
-	
-	@RequestMapping(value = "/borrowerLogin", method = RequestMethod.POST)
-	public String borrowerLogin(Model model, @RequestParam("cardNo") Integer cardNo) throws SQLException {
-		Boolean cardIsValid  = borrowerService.isValidCardNo(cardNo);
-		String message = "Please enter a valid card number!";
-		if (cardIsValid){
-			Borrower borrower = adminService.getBorrowerByPK(cardNo); 
-			message = "Welcome "+borrower.getName() + "!";
-			model.addAttribute("cardNo",cardNo);
-			model.addAttribute("message",message);
-			return "b_pickaction";
-		}else{
-			model.addAttribute("message",cardNo);
-			model.addAttribute("message",message);
-			return "borrower";
+	@RequestMapping(value = "borrowerLogin", method = RequestMethod.POST, consumes="application/json")
+	public String borrowerLogin(@RequestBody Borrower borrower) throws SQLException {
+		if ((borrower.getCardNo() != null) && (borrower.getCardNo() > 0)){
+			Integer num =  bodao.getBorrowersCountByPk(borrower.getCardNo());
+			if(num > 0){
+				return "Logged in successfully!";
+			}else{
+				return "Please enter a valid card number!";
+			}
 		}
+		return "Borrower card number should be a positive number!";
 	}
 	
-	@RequestMapping(value = "/b_pickaction", method = RequestMethod.GET)
-	public String b_pickAction(Model model,  @RequestParam("cardNo") Integer cardNo) throws SQLException {
-		model.addAttribute("cardNo", cardNo);
-		return "b_pickaction";
-	}
-	
-	@RequestMapping(value = "/b_pickbranch", method = RequestMethod.GET)
-	public String b_pickBranch(Model model, @RequestParam("cardNo") Integer cardNo) throws SQLException {
-		model.addAttribute("branches", adminService.getAllBranches(1, null));
-		//Integer branchesCount = adminService.getBranchesCount("");
-		Integer pages = 0;// getPagesNumber(branchesCount);
-		model.addAttribute("cardNo", cardNo);
-		model.addAttribute("pages", pages);
-		return "b_pickbranch";
-	}
-	
-	@RequestMapping(value = "/b_viewbooksavailable", method = RequestMethod.GET)
-	public String b_viewBooksAvailable(Model model, @RequestParam("cardNo") Integer cardNo,
-			@RequestParam("branchId") Integer branchId) throws SQLException { 
-		
-		Branch branch = librarianService.getBranchByPk(branchId);
-		List<BookCopy> copies = librarianService.getAllBookCopiesOwnedBy(branch);
-		model.addAttribute("branch", branch);
-		model.addAttribute("cardNo", cardNo);
-		model.addAttribute("branchId", branchId);
-		model.addAttribute("copies", copies);
-		return "b_viewbooksavailable";
+	@RequestMapping(value = "/b_viewbooksavailableatbranch", method = RequestMethod.POST, 
+			consumes="application/json",produces="application/json")
+	public List<BookCopy> b_viewbooksavailableatbranch(@RequestBody Branch branch) throws SQLException { 
+		return librarianService.getAllBookCopiesOwnedBy(branch);
 	}
 	
 	@RequestMapping(value = "/checkOutBook", method = RequestMethod.GET)
@@ -196,6 +169,10 @@ public class HomeController {
 		model.addAttribute("cardNo", cardNo);
 		return "b_pickaction";
 	}
+	
+	// return book copy
+	
+			// check out book copy
 	
 	@RequestMapping(value = "/returnBook", method = RequestMethod.GET)
 	public String returnBook(Model model,@RequestParam("cardNo") Integer cardNo,
@@ -215,24 +192,7 @@ public class HomeController {
 		Borrower borrower = borrowerService.getBorrowerByPK(cardNo);
 		String message = "Thank you "+borrower.getName()+"! Book returned successfully!";
 		model.addAttribute("message", message);
-		return b_viewbookloans(model,cardNo);
-	}
-	
-	@RequestMapping(value = "/b_viewbookloans", method = RequestMethod.GET)
-	public String b_viewbookloans(Model model, 
-			@RequestParam("cardNo") Integer cardNo) throws SQLException {
-		
-		List<BookLoan> bookloans = adminService.getAllDueBookLoans(1, cardNo); 
-		Borrower borrower = adminService.getBorrowerByPK(cardNo);
-		
-	    //Integer bookloansCount = adminService.getDueBookLoansCount(cardNo);
-	    Integer pages = 0; //getPagesNumber(bookloansCount);
-		
-		model.addAttribute("cardNo",cardNo);
-		model.addAttribute("pages",pages);
-		model.addAttribute("bookloans",bookloans);
-		model.addAttribute("borrower",borrower);
-		return "b_viewbookloans";
+		return null; //b_viewbookloans(model,cardNo);
 	}
 	
 	//================================================================================

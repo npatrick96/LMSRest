@@ -167,9 +167,13 @@ public class BookLoanDAO extends BaseDAO implements ResultSetExtractor<List<Book
 		return template.query("select * from tbl_book_loans where bookId = ?", new Object[]{bookId}, this);
 	}
 	
-	public List<BookLoan> readBookLoansByBorrowerCardNo(Integer pageNo, Integer cardNo) throws SQLException{
-		setPageNo(pageNo);
+	public List<BookLoan> readAllDueBookLoansByCardNo(Integer cardNo) throws SQLException{
 		List<BookLoan> bookLoans =  template.query("select * from tbl_book_loans where cardNo = ? and dateIn IS NULL", new Object[]{cardNo}, this);
+		return bookLoans;
+	}
+	
+	public List<BookLoan> readAllDueBookLoansByBorrower(Borrower borrower) throws SQLException{
+		List<BookLoan> bookLoans =  template.query("select * from tbl_book_loans where cardNo = ? and dateIn IS NULL", new Object[]{borrower.getCardNo()}, this);
 		return bookLoans;
 	}
 
