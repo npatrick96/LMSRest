@@ -49,7 +49,7 @@ public class AuthorDAO extends BaseDAO implements ResultSetExtractor<List<Author
 	}
 	
 	public List<Author> readAllAuthors() throws SQLException{
-		return template.query("select * from tbl_author", this);
+		return template.query("select * from tbl_author order by authorId DESC", this);
 	}
 	
 	public List<Author> readAllAuthors(Integer pageNo) throws SQLException{

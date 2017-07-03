@@ -61,7 +61,7 @@ public class BookDAO extends BaseDAO  implements ResultSetExtractor<List<Book>>{
 	}
 	
 	public List<Book> readAllBooks() throws SQLException{
-		return template.query("select * from tbl_book", this);
+		return template.query("select * from tbl_book order by bookId DESC", this);
 	}
 	
 	public List<Book> readAllBooksByTitle(String searchString) throws SQLException{

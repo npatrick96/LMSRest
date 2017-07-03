@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -264,117 +266,154 @@ public class HomeController {
 		return "a_book";
 	}
 	
-	@RequestMapping(value = "/a_addbook", method = RequestMethod.GET)
-	public String a_addBook(Model model) throws SQLException {
-		List<Author> authors = adminService.getAllAuthors();
-		List<Genre> genres = adminService.getAllGenres();
-		List<Publisher> publishers = adminService.getAllPublishers();
-		model.addAttribute("authors", authors);
-		model.addAttribute("genres", genres);
-		model.addAttribute("publishers", publishers);
-		return "a_addbook";
-	}
-
-	@RequestMapping(value = "/addBook", method = RequestMethod.POST)
-	public String addBook(Model model, @RequestParam("title") String title, 
-			@RequestParam(value="authorId", required=false) String[] authorIds,
-			@RequestParam(value="genreId", required=false) String[] genreIds, 
-			@RequestParam(value="publisherId", required=false) String publisherId) throws SQLException {
-		Book book = new Book();
-		book.setTitle(title);
-		if (authorIds != null && authorIds.length > 0) {
-			ArrayList<Author> authors = new ArrayList<Author>();
-			for (String a : authorIds) {
-				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
-				authors.add(author);
-			}
-			book.setAuthors(authors);
-		}
-		if (genreIds != null && genreIds.length > 0) {
-			ArrayList<Genre> genres = new ArrayList<Genre>();
-			for (String g : genreIds) {
-				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
-				genres.add(genre);
-			}
-			book.setGenres(genres);
-		}
-		if (publisherId != null  && publisherId != "") {
-			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
-			book.setPublisher(publisher);
-		}
-		adminService.saveBook(book);
-		Integer booksCount = adminService.getBooksCount("");
-		Integer pages = getPagesNumber(booksCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("books", adminService.getAllBooks(1, null));
-		return "a_viewbooks";
+//	@RequestMapping(value = "/a_addbook", method = RequestMethod.GET)
+//	public String a_addBook(Model model) throws SQLException {
+//		List<Author> authors = adminService.getAllAuthors();
+//		List<Genre> genres = adminService.getAllGenres();
+//		List<Publisher> publishers = adminService.getAllPublishers();
+//		model.addAttribute("authors", authors);
+//		model.addAttribute("genres", genres);
+//		model.addAttribute("publishers", publishers);
+//		return "a_addbook";
+//	}
+//
+//	@RequestMapping(value = "/addBook", method = RequestMethod.POST)
+//	public String addBook(Model model, @RequestParam("title") String title, 
+//			@RequestParam(value="authorId", required=false) String[] authorIds,
+//			@RequestParam(value="genreId", required=false) String[] genreIds, 
+//			@RequestParam(value="publisherId", required=false) String publisherId) throws SQLException {
+//		Book book = new Book();
+//		book.setTitle(title);
+//		if (authorIds != null && authorIds.length > 0) {
+//			ArrayList<Author> authors = new ArrayList<Author>();
+//			for (String a : authorIds) {
+//				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
+//				authors.add(author);
+//			}
+//			book.setAuthors(authors);
+//		}
+//		if (genreIds != null && genreIds.length > 0) {
+//			ArrayList<Genre> genres = new ArrayList<Genre>();
+//			for (String g : genreIds) {
+//				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
+//				genres.add(genre);
+//			}
+//			book.setGenres(genres);
+//		}
+//		if (publisherId != null  && publisherId != "") {
+//			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
+//			book.setPublisher(publisher);
+//		}
+//		adminService.saveBook(book);
+//		Integer booksCount = adminService.getBooksCount("");
+//		Integer pages = getPagesNumber(booksCount);
+//		model.addAttribute("pages", pages);
+//		model.addAttribute("books", adminService.getAllBooks(1, null));
+//		return "a_viewbooks";
+//	}
+	
+	@RequestMapping(value = "addBook", method = RequestMethod.POST, consumes="application/json")
+	public String addBook(@RequestBody Book book) throws SQLException {
+		bdao.addBook(book);
+		return "Book Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "/a_editbook", method = RequestMethod.GET)
-	public String a_editBook(Model model, 
-			@RequestParam("bookId") Integer bookId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
-		Book book = adminService.getBookByPK(bookId);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		model.addAttribute("book", book);
-		model.addAttribute("authors", adminService.getAllAuthors());
-		model.addAttribute("genres", adminService.getAllGenres());
-		model.addAttribute("publishers", adminService.getAllPublishers());
-		return "a_editbook";
+	@RequestMapping(value = "editBook", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Book> editBook(@RequestBody Book book) throws SQLException {
+		//bdao.addBook(book);
+		bdao.updateBook(book);
+		return bdao.readAllBooks();
 	}
 	
-	@RequestMapping(value = "/editBook", method = RequestMethod.POST)
-	public String editBook(Model model, @RequestParam("bookId") Integer bookId,
-			@RequestParam("title") String title, 
-			@RequestParam(value="authorId", required=false) String[] authorIds,
-			@RequestParam(value="genreId", required=false) String[] genreIds, 
-			@RequestParam(value="publisherId", required=false) String publisherId, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
+	@RequestMapping(value = "/a_viewbooks/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<Book> a_viewBooks(@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException { 
 		if (searchString == null){
 			searchString = "";}
 		if(pageNo == null){
 			pageNo = 1;}
+		List<Book> books =  bdao.readAllBooksByName(pageNo, searchString);
+		for (Book b: books){
+			b.setAuthors(adao.readAllAuthorsByBookId(b.getBookId()));
+			// do the same for genres
+			// do the same for publisher
+		}
 		
-		Book book = adminService.getBookByPK(bookId);
-		book.setTitle(title);
-		
-		if (authorIds != null && authorIds.length > 0){
-			ArrayList<Author> authors = new ArrayList<Author>();
-			for (String a: authorIds){
-				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
-				authors.add(author);
-			}
-			book.setAuthors(authors);
-		}else{book.setAuthors(null);}
-		if (genreIds != null && genreIds.length > 0){
-			ArrayList<Genre> genres = new ArrayList<Genre>();
-			for (String g: genreIds){
-				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
-				genres.add(genre);
-			}
-			book.setGenres(genres);
-		}else{book.setGenres(null);}
-		if (publisherId != null && publisherId != ""){
-			if (Integer.parseInt(publisherId) != 0){
-			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
-			book.setPublisher(publisher);
-			}else{
-				book.setPublisher(null);
-			}
-		}else{}
-		
-		adminService.saveBook(book);
-		model.addAttribute("books", adminService.getAllBooks(pageNo, searchString));
-		Integer booksCount = adminService.getBooksCount(searchString);
-		Integer pages = getPagesNumber(booksCount);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		model.addAttribute("searchString", searchString);
-		return "a_viewbooks";
+		return books;
 	}
+	
+	@RequestMapping(value = "deleteBook", method = RequestMethod.POST, consumes="application/json ")
+	public String deleteBook(@RequestBody Book book) throws SQLException {
+		bdao.deleteBook(book);
+		return "Book deleted successfully!";
+	}
+	
+//	@RequestMapping(value = "/a_editbook", method = RequestMethod.GET)
+//	public String a_editBook(Model model, 
+//			@RequestParam("bookId") Integer bookId, 
+//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
+//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
+//		Book book = adminService.getBookByPK(bookId);
+//		model.addAttribute("pageNo", pageNo);
+//		model.addAttribute("searchString", searchString);
+//		model.addAttribute("book", book);
+//		model.addAttribute("authors", adminService.getAllAuthors());
+//		model.addAttribute("genres", adminService.getAllGenres());
+//		model.addAttribute("publishers", adminService.getAllPublishers());
+//		return "a_editbook";
+//	}
+//	
+//	@RequestMapping(value = "/editBook", method = RequestMethod.POST)
+//	public String editBook(Model model, @RequestParam("bookId") Integer bookId,
+//			@RequestParam("title") String title, 
+//			@RequestParam(value="authorId", required=false) String[] authorIds,
+//			@RequestParam(value="genreId", required=false) String[] genreIds, 
+//			@RequestParam(value="publisherId", required=false) String publisherId, 
+//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
+//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException {
+//		if (searchString == null){
+//			searchString = "";}
+//		if(pageNo == null){
+//			pageNo = 1;}
+//		
+//		Book book = adminService.getBookByPK(bookId);
+//		book.setTitle(title);
+//		
+//		if (authorIds != null && authorIds.length > 0){
+//			ArrayList<Author> authors = new ArrayList<Author>();
+//			for (String a: authorIds){
+//				Author author = adminService.getAuthorByPK(Integer.parseInt(a));
+//				authors.add(author);
+//			}
+//			book.setAuthors(authors);
+//		}else{book.setAuthors(null);}
+//		if (genreIds != null && genreIds.length > 0){
+//			ArrayList<Genre> genres = new ArrayList<Genre>();
+//			for (String g: genreIds){
+//				Genre genre = adminService.getGenreByPK(Integer.parseInt(g));
+//				genres.add(genre);
+//			}
+//			book.setGenres(genres);
+//		}else{book.setGenres(null);}
+//		if (publisherId != null && publisherId != ""){
+//			if (Integer.parseInt(publisherId) != 0){
+//			Publisher publisher = adminService.getPublisherByPK(Integer.parseInt(publisherId));
+//			book.setPublisher(publisher);
+//			}else{
+//				book.setPublisher(null);
+//			}
+//		}else{}
+//		
+//		adminService.saveBook(book);
+//		model.addAttribute("books", adminService.getAllBooks(pageNo, searchString));
+//		Integer booksCount = adminService.getBooksCount(searchString);
+//		Integer pages = getPagesNumber(booksCount);
+//		model.addAttribute("pages", pages);
+//		model.addAttribute("pageNo", pageNo);
+//		model.addAttribute("searchString", searchString);
+//		return "a_viewbooks";
+//	}
 	
 //	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET)
 //	public String a_viewBooks(Model model) throws SQLException { 
@@ -425,10 +464,7 @@ public class HomeController {
 //		model.addAttribute("pageNo", pageNo);
 //		return "a_viewbooks";
 //	}
-	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET, produces="application/json")
-	public List<Book> a_viewBooks() throws SQLException { 
-		return bdao.readAllBooks();
-	}
+	
 	
 	
 	
