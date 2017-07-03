@@ -69,111 +69,76 @@ public class HomeController {
 	BookCopyDAO bcdao;
 	
 	//================================================================================
-    // Welcome page && Home menu
+    // Welcome page 
     //================================================================================
 	
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) {
-		return "welcome";
-	}
-	
-	@RequestMapping(value = "/admin", method = RequestMethod.GET)
-	public String admin() {
-		return "admin";
-	}
-	
-	@RequestMapping(value = "/librarian", method = RequestMethod.GET)
-	public String librarian(Model model) throws SQLException {
-		model.addAttribute("branches", librarianService.getAllBranches());
-		return "librarian";
-	}
-	
-	@RequestMapping(value = "/borrower", method = RequestMethod.GET)
-	public String borrower() {
-		return "borrower";
+		return "Welcome to the GCIT library management app.";
 	}
 	
 	//================================================================================
     // LIBRARIAN SERVICES
-    //================================================================================
+    //================================================================================	
 	
-	@RequestMapping(value = "/l_editbranch", method = RequestMethod.GET)
-	public String l_editBranch(Model model, 
-			@RequestParam("branchId") Integer branchId) throws SQLException {
-		Branch branch = adminService.getBranchByPK(branchId);
-		model.addAttribute("branch", branch);
-		return "l_editbranch";
-	}
-	
-	@RequestMapping(value = "/editBranchLib", method = RequestMethod.POST)
-	public String editBranchLib(Model model, 
-			@RequestParam("branchId") Integer branchId,
-			@RequestParam("branchName") String branchName, 
-			@RequestParam(value = "branchAddress", required = false) String branchAddress) throws SQLException {
-		
-		Branch branch = adminService.getBranchByPK(branchId);
-		branch.setBranchName(branchName);
-		if (branchAddress != null && branchAddress.length() > 0){
-			branch.setBranchAddress(branchAddress);
+	@RequestMapping(value = "/librarian", method = RequestMethod.GET, produces="application/json")
+	public List<Branch> librarian() throws SQLException { 
+		List<Branch> branches =  brdao.readAllBranches();
+		for (Branch br: branches){
+			br.setBooks(bdao.readAllBooksByBranchId(br.getBranchId()));
+			br.setBookLoans(bldao.readAllBookLoansByBranchId(br.getBranchId()));
 		}
-		adminService.saveBranch(branch);
-		return librarian(model);
+		return branches;
 	}
 	
-	
-	@RequestMapping(value = "/getBookCopies", method = RequestMethod.GET)
-	public String getBookCopies(Model model, 
-			@RequestParam("branchId") Integer branchId) throws SQLException {
-		Branch branch = librarianService.getBranchByPk(branchId);
-		model.addAttribute("branchId", branchId);
-		model.addAttribute("branch", branch);
-		return l_viewBookCopies(model, branchId);
+	@RequestMapping(value = "editBranchLib", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<Branch> editBranchLib(@RequestBody Branch branch) throws SQLException {
+		brdao.updateBranch(branch);
+		return librarian();
 	}
 	
-	@RequestMapping(value = "/l_viewbookcopies", method = RequestMethod.GET)
-	public String l_viewBookCopies(Model model, 
-			@RequestParam("branchId") Integer branchId) throws SQLException {
-		Branch branch = librarianService.getBranchByPk(branchId);
-		model.addAttribute("branch", branch);
-		List<BookCopy> copies = librarianService.getAllBookCopiesOwnedBy(branch);
-		model.addAttribute("copies", copies);
-		return "l_viewbookcopies";
+	@RequestMapping(value = "/l_viewbookcopies", method = RequestMethod.GET, 
+			produces="application/json")
+	public List<BookCopy> l_viewbookcopies() throws SQLException {
+		return bcdao.readAllBookCopies();
 	}
 	
-	@RequestMapping(value = "/l_editbookcopy", method = RequestMethod.GET)
-	public String l_editbookcopy(Model model, 
-			@RequestParam("branchId") Integer branchId, 
-			@RequestParam("bookId") Integer bookId,
-			@RequestParam("noOfCopies") Integer noOfCopies) throws SQLException {
-		model.addAttribute("branchId", branchId);
-		model.addAttribute("bookId", bookId);
-		model.addAttribute("oldNoOfCopies", noOfCopies);
-		return "l_editbookcopy";
+	@RequestMapping(value = "/l_viewbookcopiesbybranch", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookCopy> l_viewbookcopiesbybranch(@RequestBody Branch branch) throws SQLException {
+		return bcdao.readAllBookCopiesByBranch(branch);
 	}
 	
-	@RequestMapping(value = "/editBookCopy", method = RequestMethod.POST)
-	public String editBookCopy(Model model, @RequestParam("branchId") Integer branchId, @RequestParam("bookId") Integer bookId,
-			@RequestParam("noOfCopies") Integer noOfCopies) throws SQLException {
-		BookCopy copy = librarianService.getBookCopyByPks(branchId, bookId);
-		copy.setNoOfCopies(noOfCopies);
-		librarianService.saveBookCopy(copy);
-		return l_viewBookCopies(model, branchId);
+	@RequestMapping(value = "/l_viewbookcopiesbybook", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookCopy> l_viewbookcopiesbybook(@RequestBody Book book) throws SQLException {
+		return bcdao.readAllBookCopiesByBook(book);
 	}
 	
-	@RequestMapping(value = "/deleteBookCopy", method = RequestMethod.GET)
-	public String deleteBookCopy(Model model, 
-			@RequestParam("branchId") Integer branchId, 
-			@RequestParam("bookId") Integer bookId) throws SQLException {
-		
-		librarianService.deleteBookCopy( bookId, branchId);
-		String message  = "Deletion completed successfully";
-		model.addAttribute("message", message);
-		return l_viewBookCopies(model, branchId);
+	@RequestMapping(value = "editBookCopy", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookCopy> editBookCopy(@RequestBody BookCopy bookcopy) throws SQLException {
+		bcdao.updateBookCopy(bookcopy);
+		return l_viewbookcopies();
+	}
+	
+	@RequestMapping(value = "deleteBookCopy", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookCopy> deleteBookCopy(@RequestBody BookCopy bookcopy) throws SQLException {
+		bcdao.deleteBookCopy(bookcopy);
+		return l_viewbookcopies();
 	}
 	
 	//================================================================================
     // BORROWER SERVICES
     //================================================================================
+	
+	// view book copies
+	
+		// return book copy
+		
+		// check out book copy
 	
 	@RequestMapping(value = "/borrowerLogin", method = RequestMethod.POST)
 	public String borrowerLogin(Model model, @RequestParam("cardNo") Integer cardNo) throws SQLException {
@@ -294,7 +259,7 @@ public class HomeController {
 			consumes="application/json", produces="application/json")
 	public List<Book> editBook(@RequestBody Book book) throws SQLException {
 		bdao.updateBook(book);
-		return bdao.readAllBooks();
+		return a_viewBooks();
 	}
 	
 	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET, produces="application/json")
@@ -358,7 +323,7 @@ public class HomeController {
 			consumes="application/json", produces="application/json")
 	public List<Author> editBook(@RequestBody Author author) throws SQLException {
 		adao.updateAuthor(author);
-		return adao.readAllAuthors();
+		return a_viewAuthors();
 	}
 	
 	@RequestMapping(value = "/a_viewauthors/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
@@ -414,7 +379,7 @@ public class HomeController {
 			consumes="application/json", produces="application/json")
 	public List<Borrower> editBook(@RequestBody Borrower borrower) throws SQLException {
 		bodao.updateBorrower(borrower);
-		return bodao.readAllBorrowers();
+		return a_viewborrowers();
 	}
 	
 	@RequestMapping(value = "/a_viewborrowers/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
@@ -466,11 +431,11 @@ public class HomeController {
 		return "branch Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "editbranch", method = RequestMethod.POST, 
+	@RequestMapping(value = "editBranch", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
-	public List<Branch> editBook(@RequestBody Branch branch) throws SQLException {
+	public List<Branch> editBranch(@RequestBody Branch branch) throws SQLException {
 		brdao.updateBranch(branch);
-		return brdao.readAllBranches();
+		return a_viewbranches();
 	}
 	
 	@RequestMapping(value = "/a_viewbranches/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
@@ -529,7 +494,7 @@ public class HomeController {
 			consumes="application/json", produces="application/json")
 	public List<Publisher> editPulisher(@RequestBody Publisher publisher) throws SQLException {
 		pdao.updatePublisher(publisher);
-		return pdao.readAllPublishers();
+		return a_viewpublishers();
 	}
 	
 	@RequestMapping(value = "/a_viewpublishers/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
@@ -576,7 +541,7 @@ public class HomeController {
 			consumes="application/json", produces="application/json")
 	public List<BookLoan> editBookLoan(@RequestBody BookLoan bookloan) throws SQLException {
 		bldao.updateBookLoan(bookloan);
-		return bldao.readAllBookLoans();
+		return a_viewbookloans();
 	}
 	
 	@RequestMapping(value = "/a_viewbookloans", method = RequestMethod.GET, produces="application/json")
