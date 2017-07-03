@@ -11,12 +11,14 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.gcit.lms.dao.AuthorDAO;
+import com.gcit.lms.dao.BookDAO;
 import com.gcit.lms.entity.Author;
 import com.gcit.lms.entity.Book;
 import com.gcit.lms.entity.BookCopy;
@@ -29,7 +31,7 @@ import com.gcit.lms.service.AdminService;
 import com.gcit.lms.service.BorrowerService;
 import com.gcit.lms.service.LibrarianService;
 
-@Controller
+@RestController
 public class HomeController {
 	
 	@Autowired
@@ -40,6 +42,12 @@ public class HomeController {
 	
 	@Autowired
 	BorrowerService borrowerService;
+	
+	@Autowired
+	AuthorDAO adao;
+	
+	@Autowired
+	BookDAO bdao;
 	
 	//================================================================================
     // Welcome page && Home menu
@@ -401,71 +409,27 @@ public class HomeController {
 	}
 	
 	
-	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET)
-	public String a_viewBooks(Model model, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
-			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException { 
-		Integer booksCount = 0;
-		List<Book> books = new ArrayList<>();
-		if (searchString == null){
-			searchString = "";}
-		if(pageNo == null){
-			pageNo = 1;}
-		books = adminService.getAllBooks(pageNo, searchString);
-		booksCount = adminService.getBooksCount(searchString); 
-		Integer pages = getPagesNumber(booksCount);
-		model.addAttribute("books", books);
-		model.addAttribute("pages", pages);
-		model.addAttribute("pageNo", pageNo);
-		//System.out.println(searchString + "searchString");
-		model.addAttribute("searchString", searchString);
-		return "a_viewbooks";
+//	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET)
+//	public String a_viewBooks(Model model, 
+//			@RequestParam(value = "pageNo", required = false) Integer pageNo, 
+//			@RequestParam(value = "searchString", required = false) String searchString) throws SQLException { 
+//		Integer booksCount = 0;
+//		List<Book> books = new ArrayList<>();
+//		if (searchString == null){
+//			searchString = "";}
+//		if(pageNo == null){
+//			pageNo = 1;}
+//		books = adminService.getAllBooks(pageNo, searchString);
+//		booksCount = adminService.getBooksCount(searchString); 
+//		Integer pages = getPagesNumber(booksCount);
+//		model.addAttribute("pageNo", pageNo);
+//		return "a_viewbooks";
+//	}
+	@RequestMapping(value = "/a_viewbooks", method = RequestMethod.GET, produces="application/json")
+	public List<Book> a_viewBooks() throws SQLException { 
+		return bdao.readAllBooks();
 	}
 	
-	@RequestMapping(value = "/searchBooks", method = RequestMethod.GET) 
-	public void searchBooks(Model model, 
-			@RequestParam("searchString") String searchString, 
-			HttpServletResponse response) throws SQLException, IOException {
-		if (searchString == null) {
-			searchString = "";}
-		Integer pageNo = 1;
-		Integer booksCount = adminService.getBooksCount(searchString);
-		Integer pages = getPagesNumber(booksCount);
-		List<Book> books = adminService.getAllBooks(pageNo, searchString);
-		StringBuffer strBuf = new StringBuffer();
-		
-		strBuf.append("<nav aria-label='Page navigation'><ul class='pagination'><li><a href='#' aria-label='Previous'><span aria-hidden='true'>&laquo;</span></a></li>");
-		for (int i = 1; i<= pages; i++){
-			strBuf.append("<li><a href='a_viewbooks?pageNo="+i+"&searchString="+searchString+"'>"+i+"</a></li>");
-		}
-		strBuf.append("<li><a href='#' aria-label='Next'><span aria-hidden='true'>&raquo;</span></a></li></ul></nav>");
-		strBuf.append("<table class='table' id='authorsTable'>");
-		strBuf.append("<tr><th>No</th><th>Book Name</th><th>Authors</th><th>Genres</th><th>Publisher</th><th>Edit</th><th>Delete</th></tr>");
-		for (Book bk : books) {
-			int idx = books.indexOf(bk) + 1;
-			strBuf.append("<tr><td>" + idx
-					+ "</td><td>" + bk.getTitle() + "</td><td>");
-			for (Author a : bk.getAuthors()) {
-				strBuf.append(" '"+a.getAuthorName() + "' ");
-			}
-			strBuf.append("</td><td>");
-			for (Genre g : bk.getGenres()) {
-				strBuf.append(" '"+g.getGenreName() + "' ");
-			}
-			strBuf.append("</td><td>");
-			if (bk.getPublisher()!=null) {
-				strBuf.append(bk.getPublisher().getPublisherName());
-			}else{
-				strBuf.append("");
-			}
-			strBuf.append("</td><td><button type='button' class='btn btn-sm btn-primary'data-toggle='modal' data-target='#editBookModal' href='a_editbook?bookId="
-					+ bk.getBookId() +"'>Edit!</button></td>");
-			strBuf.append("<td><button type='button' class='btn btn-sm btn-danger' onclick='javascript:location.href='deleteBook?bookId="
-					+ bk.getBookId()+"'>Delete!</button></td></tr>");
-		}
-		strBuf.append("</table>");
-		response.getWriter().write(strBuf.toString());
-	}
 	
 	
 	//================================================================================
