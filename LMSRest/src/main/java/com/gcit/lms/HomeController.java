@@ -410,7 +410,7 @@ public class HomeController {
 		return "borrower Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "editborrower", method = RequestMethod.POST, 
+	@RequestMapping(value = "editBorrower", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
 	public List<Borrower> editBook(@RequestBody Borrower borrower) throws SQLException {
 		bodao.updateBorrower(borrower);
@@ -579,23 +579,18 @@ public class HomeController {
 		return bldao.readAllBookLoans();
 	}
 	
-	@RequestMapping(value = "a_viewbookloans/{pageNo}", method = RequestMethod.POST, 
-			consumes="application/json", produces="application/json")
-	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan) throws SQLException {
+	@RequestMapping(value = "/a_viewbookloans", method = RequestMethod.GET, produces="application/json")
+	public List<BookLoan> a_viewbookloans() throws SQLException {
 		return bldao.readAllBookLoans();
 	}
 	
-	@RequestMapping(value = "a_viewbookloans/{pageNo}/{searchString}", method = RequestMethod.POST, 
-			consumes="application/json", produces="application/json")
-	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan,
-			@PathVariable Integer pageNo) throws SQLException {
+	@RequestMapping(value = "/a_viewbookloans/{pageNo}", method = RequestMethod.GET, produces="application/json")
+	public List<BookLoan> a_viewbookloans(@PathVariable Integer pageNo) throws SQLException {
 		return bldao.readAllBookLoans(pageNo);
 	}
 	
-	@RequestMapping(value = "a_viewbookloans", method = RequestMethod.POST, 
-			consumes="application/json", produces="application/json")
-	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan,
-			@PathVariable Integer pageNo, 
+	@RequestMapping(value = "/a_viewbookloans/{pageNo}/{searchString}", method = RequestMethod.GET, produces="application/json")
+	public List<BookLoan> a_viewbookloans(@PathVariable Integer pageNo, 
 			@PathVariable String searchString) throws SQLException {
 		return bldao.readAllBookLoansByDateOut(pageNo, searchString);
 	}
