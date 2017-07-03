@@ -201,8 +201,8 @@ public class HomeController {
 	@RequestMapping(value = "/b_pickbranch", method = RequestMethod.GET)
 	public String b_pickBranch(Model model, @RequestParam("cardNo") Integer cardNo) throws SQLException {
 		model.addAttribute("branches", adminService.getAllBranches(1, null));
-		Integer branchesCount = adminService.getBranchesCount("");
-		Integer pages = getPagesNumber(branchesCount);
+		//Integer branchesCount = adminService.getBranchesCount("");
+		Integer pages = 0;// getPagesNumber(branchesCount);
 		model.addAttribute("cardNo", cardNo);
 		model.addAttribute("pages", pages);
 		return "b_pickbranch";
@@ -260,8 +260,8 @@ public class HomeController {
 		List<BookLoan> bookloans = adminService.getAllDueBookLoans(1, cardNo); 
 		Borrower borrower = adminService.getBorrowerByPK(cardNo);
 		
-	    Integer bookloansCount = adminService.getDueBookLoansCount(cardNo);
-	    Integer pages = getPagesNumber(bookloansCount);
+	    //Integer bookloansCount = adminService.getDueBookLoansCount(cardNo);
+	    Integer pages = 0; //getPagesNumber(bookloansCount);
 		
 		model.addAttribute("cardNo",cardNo);
 		model.addAttribute("pages",pages);
@@ -525,9 +525,9 @@ public class HomeController {
 		return "publisher Added - Success is in the AIR!";
 	}
 	
-	@RequestMapping(value = "editpublisher", method = RequestMethod.POST, 
+	@RequestMapping(value = "editPublisher", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
-	public List<Publisher> editBook(@RequestBody Publisher publisher) throws SQLException {
+	public List<Publisher> editPulisher(@RequestBody Publisher publisher) throws SQLException {
 		pdao.updatePublisher(publisher);
 		return pdao.readAllPublishers();
 	}
@@ -570,61 +570,33 @@ public class HomeController {
     // Loans pages
     //================================================================================
 	
-	@RequestMapping(value = "/a_editbookloan", method = RequestMethod.GET)
-	public String a_editBookLoan(Model model, 
-			@RequestParam("bookId") Integer bookId, 
-			@RequestParam("cardNo") Integer cardNo, 
-			@RequestParam("branchId") Integer branchId,
-			@RequestParam("dateOut") String dateOut) throws SQLException {
-		dateOut = dateOut.replaceAll("T", " ");
-		BookLoan bookloan = adminService.getBookLoanBy4Pks(bookId, branchId, cardNo, dateOut);
-		String displayDueDate = "";
-		if (bookloan.getDueDate() != null){
-			displayDueDate = bookloan.getDueDate().substring(0, 10);
-		}
-		System.out.println(displayDueDate); 
-		model.addAttribute("oldDueDate", displayDueDate);
-		model.addAttribute("bl", bookloan);
-		return "a_editbookloan";
+	
+	
+	@RequestMapping(value = "editBookLoan", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> editBookLoan(@RequestBody BookLoan bookloan) throws SQLException {
+		bldao.updateBookLoan(bookloan);
+		return bldao.readAllBookLoans();
 	}
 	
-	@RequestMapping(value = "/editBookLoan", method = RequestMethod.POST)
-	public String editBookLoan(Model model, 
-			@RequestParam("bookId") Integer bookId, 
-			@RequestParam("cardNo") Integer cardNo, 
-			@RequestParam("branchId") Integer branchId,
-			@RequestParam("dateOut") String dateOut,
-			@RequestParam(value = "newDueDate", required = false) String newDueDate) throws SQLException {
-		BookLoan bookloan = adminService.getBookLoanBy4Pks(bookId, branchId, cardNo, dateOut);
-		if (newDueDate != null && newDueDate.length() > 0){
-			adminService.overrideDueDate(bookloan, newDueDate);
-		}
-		return a_viewBookLoans(model, 1);
-	}	
-	
-	@RequestMapping(value = "/a_viewbookloans", method = RequestMethod.GET)
-	public String a_viewBookLoans(Model model, 
-			@RequestParam(value = "pageNo", required = false) Integer pageNo) throws SQLException {
-		if(pageNo == null){
-			pageNo = 1;}
-		model.addAttribute("bookloans", adminService.getAllBookLoans(pageNo, null));
-		Integer loansCount = adminService.getBookLoansCount("");
-		Integer pages = getPagesNumber(loansCount);
-		model.addAttribute("pages", pages);
-		return "a_viewbookloans";
+	@RequestMapping(value = "a_viewbookloans/{pageNo}", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan) throws SQLException {
+		return bldao.readAllBookLoans();
 	}
 	
-	//================================================================================
-    // Helpers Methods
-    //================================================================================
+	@RequestMapping(value = "a_viewbookloans/{pageNo}/{searchString}", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan,
+			@PathVariable Integer pageNo) throws SQLException {
+		return bldao.readAllBookLoans(pageNo);
+	}
 	
-	public Integer getPagesNumber(Integer entityCount){
-		int pages = 0;
-		if (entityCount % 10 > 0) {
-			pages = entityCount / 10 + 1;
-		} else {
-			pages = entityCount / 10;
-		}
-		return pages;
+	@RequestMapping(value = "a_viewbookloans", method = RequestMethod.POST, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> a_viewBookLoans(@RequestBody BookLoan bookloan,
+			@PathVariable Integer pageNo, 
+			@PathVariable String searchString) throws SQLException {
+		return bldao.readAllBookLoansByDateOut(pageNo, searchString);
 	}
 }
