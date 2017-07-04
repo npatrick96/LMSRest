@@ -32,10 +32,6 @@ public class LibrarianService {
 	@Autowired
 	BookLoanDAO bldao;
 	
-	//================================================================================
-    // LIBRARIAN SERVICES
-    //================================================================================	
-	
 	@RequestMapping(value = "/librarian", method = RequestMethod.GET, produces="application/json")
 	public List<Branch> librarian() throws SQLException { 
 		List<Branch> branches =  brdao.readAllBranches();
@@ -46,6 +42,7 @@ public class LibrarianService {
 		return branches;
 	}
 	
+	@Transactional
 	@RequestMapping(value = "editBranchLib", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
 	public List<Branch> editBranchLib(@RequestBody Branch branch) throws SQLException {
@@ -71,6 +68,7 @@ public class LibrarianService {
 		return bcdao.readAllBookCopiesByBook(book);
 	}
 	
+	@Transactional
 	@RequestMapping(value = "editBookCopy", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
 	public List<BookCopy> editBookCopy(@RequestBody BookCopy bookcopy) throws SQLException {
@@ -78,93 +76,11 @@ public class LibrarianService {
 		return l_viewbookcopies();
 	}
 	
+	@Transactional
 	@RequestMapping(value = "deleteBookCopy", method = RequestMethod.POST, 
 			consumes="application/json", produces="application/json")
 	public List<BookCopy> deleteBookCopy(@RequestBody BookCopy bookcopy) throws SQLException {
 		bcdao.deleteBookCopy(bookcopy);
 		return l_viewbookcopies();
 	}
-	
-	//================================================================================
-    // BELOW HERE IS OLD LIBRARIAN SERVICE CODE TERRITORY
-    //================================================================================
-	
-//	public List<BookCopy> getAllBookCopiesOwnedBy(Branch branch) throws SQLException {
-//			return bcdao.readAllBookCopiesByBranch(branch);
-//	}
-//	
-//	public Branch getBranchByPk(Integer branchId) throws SQLException {
-//			return brdao.readBranchByPK(branchId);
-//			}
-//
-//	public BookCopy getBookCopyByPks(Integer branchId, Integer bookId) throws SQLException {
-//			return bcdao.readBookCopyByPks(branchId, bookId);
-//	}
-//
-//	public List<Branch> getAllBranches() throws SQLException {
-//			return brdao.readAllBranches();
-//	}
-//
-//	@Transactional
-//	public void addBookCopiesToBranch(Book book, Branch branch, Integer noOfCopies) throws SQLException {
-//		if (book.getBookId() != null) {
-//			bdao.updateBook(book);
-//		} else {
-//			bdao.addBook(book);
-//		}
-//		saveBranch(branch);
-//		// TODO: Not sure the below implementation is the best way to do it
-//		int currentNoOfCopies = bcdao.getBookCopyNoOfCopies(book, branch);
-//		BookCopy bookcopy = new BookCopy();
-//		bookcopy.setBook(book);
-//		bookcopy.setBranch(branch);
-//		bookcopy.setNoOfCopies(noOfCopies + currentNoOfCopies);
-//		bcdao.addBookCopy(bookcopy);
-//	}
-//
-//	@Transactional
-//	public void updateBookCopiesOfBranch(Book book, Branch branch, Integer noOfCopies) throws SQLException {
-//		if (book.getBookId() != null) {
-//			bdao.updateBook(book);
-//		} else {
-//			bdao.addBook(book);
-//		}
-//		saveBranch(branch);
-//		BookCopy bookcopy = new BookCopy();
-//		bookcopy.setBook(book);
-//		bookcopy.setBranch(branch);
-//		bookcopy.setNoOfCopies(noOfCopies);
-//		bcdao.addBookCopy(bookcopy);
-//	}
-//	
-//	@Transactional
-//	public void deleteBookCopy(Integer bookId, Integer branchId) throws SQLException {
-//		bcdao.deleteBookCopy(bookId, branchId);
-//	}
-//
-//	@Transactional
-//	public void saveBranch(Branch branch) throws SQLException {
-//		if (branch.getBranchId() != null) {
-//			brdao.updateBranchName(branch);
-//			if (branch.getBranchAddress() != null) {
-//				brdao.updateBranch(branch);
-//			} else {
-//				brdao.updateBranchName(branch);
-//			}
-//		} else {
-//			int branchId = brdao.addBranchWithID(branch);
-//			if (branch.getBranchAddress() != null) {
-//				brdao.updateBranchAddress(branchId, branch.getBranchAddress());
-//			}
-//		}
-//	}
-//	
-//	@Transactional
-//	public void saveBookCopy(BookCopy copy) throws SQLException {
-//		if (copy.getBranch() != null && copy.getBook() != null) {
-//			bcdao.updateNoOfCopies(copy);
-//		} else {
-//			bcdao.addBookCopy(copy);
-//		}
-//	}
 }

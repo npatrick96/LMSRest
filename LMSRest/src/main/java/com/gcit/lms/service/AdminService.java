@@ -1,7 +1,6 @@
 package com.gcit.lms.service;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import com.gcit.lms.entity.Book;
 import com.gcit.lms.entity.BookLoan;
 import com.gcit.lms.entity.Borrower;
 import com.gcit.lms.entity.Branch;
-import com.gcit.lms.entity.Genre;
 import com.gcit.lms.entity.Publisher;
 
 @RestController
@@ -53,12 +51,6 @@ public class AdminService {
 	//================================================================================
     // Books pages
     //================================================================================
-	
-//	@RequestMapping(value = "/a_book", method = RequestMethod.GET)
-//	public String a_book() {
-//		return "a_book";
-//	}
-//	
 	
 	@RequestMapping(value = "addBook", method = RequestMethod.POST, consumes="application/json")
 	public String addBook(@RequestBody Book book) throws SQLException {
@@ -116,12 +108,6 @@ public class AdminService {
 	//================================================================================
     // Authors pages
     //================================================================================
-
-	
-//	@RequestMapping(value = "/a_author", method = RequestMethod.GET)
-//	public String a_author() {
-//		return "a_author";
-//	}
 	
 	@RequestMapping(value = "addAuthor", method = RequestMethod.POST, consumes="application/json")
 	public String addAuthor(@RequestBody Author author) throws SQLException {
@@ -173,11 +159,6 @@ public class AdminService {
 	//================================================================================
     // Borrowers pages
     //================================================================================
-	
-//	@RequestMapping(value = "/a_borrower", method = RequestMethod.GET)
-//	public String a_borrower() {
-//		return "a_borrower";
-//	}
 
 	@Transactional
 	@RequestMapping(value = "addBorrower", method = RequestMethod.POST, consumes="application/json")
@@ -232,11 +213,6 @@ public class AdminService {
 	//================================================================================
     // Branches pages
     //================================================================================
-	
-//	@RequestMapping(value = "/a_branch", method = RequestMethod.GET)
-//	public String a_branch() {
-//		return "a_branch";
-//	}
 	
 	@Transactional
 	@RequestMapping(value = "addBranch", method = RequestMethod.POST, consumes="application/json")
@@ -295,10 +271,6 @@ public class AdminService {
     // Publishers pages
     //================================================================================
 	
-//	@RequestMapping(value = "/a_publisher", method = RequestMethod.GET)
-//	public String a_publisher() {
-//		return "a_publisher";
-//	}
 	
 	@Transactional
 	@RequestMapping(value = "addPublisher", method = RequestMethod.POST, consumes="application/json")
