@@ -40,23 +40,47 @@ public class BorrowerService {
 	@Autowired
 	BookCopyDAO bcdao;
 	
-	@RequestMapping(value = "/b_viewbookloansbyuser", method = RequestMethod.POST, 
+	@RequestMapping(value = "/b_viewbookloansbyuser", method = RequestMethod.GET, 
 			consumes="application/json", produces="application/json")
 	public List<BookLoan> b_viewbookloansbyuser(@RequestBody Borrower borrower) throws SQLException {
-		return bldao.readAllDueBookLoansByBorrower(borrower);
+		return bldao.readAllBookLoansByBorrower(borrower);
 	}
 	
 	@RequestMapping(value = "/b_viewbookloansbyuser/{cardNo}", 
-			method = RequestMethod.POST, produces="application/json")
+			method = RequestMethod.GET, produces="application/json")
 	public List<BookLoan> b_viewbookloansbyuser(@PathVariable Integer cardNo) throws SQLException {
-		Borrower borrower = bodao.readBorrowerByPK(cardNo);
+		return bldao.readAllBookLoansByCardNo(cardNo);
+	}
+	
+	@RequestMapping(value = "/b_viewduebookloansbyuser", method = RequestMethod.GET, 
+			consumes="application/json", produces="application/json")
+	public List<BookLoan> b_viewduebookloansbyuser(@RequestBody Borrower borrower) throws SQLException {
 		return bldao.readAllDueBookLoansByBorrower(borrower);
+	}
+	
+	@RequestMapping(value = "/b_viewduebookloansbyuser/{cardNo}", 
+			method = RequestMethod.GET, produces="application/json")
+	public List<BookLoan> b_viewduebookloansbyuser(@PathVariable Integer cardNo) throws SQLException {
+		return bldao.readAllDueBookLoansByCardNo(cardNo);
 	}
 	
 	@RequestMapping(value = "borrowerLogin", method = RequestMethod.POST, consumes="application/json")
 	public String borrowerLogin(@RequestBody Borrower borrower) throws SQLException {
 		if ((borrower.getCardNo() != null) && (borrower.getCardNo() > 0)){
 			Integer num =  bodao.getBorrowersCountByPk(borrower.getCardNo());
+			if(num > 0){
+				return "Logged in successfully!";
+			}else{
+				return "Please enter a valid card number!";
+			}
+		}
+		return "Borrower card number should be a positive number!";
+	}
+	
+	@RequestMapping(value = "borrowerLogin/{cardNo}", method = RequestMethod.GET)
+	public String borrowerLogin(@PathVariable Integer cardNo) throws SQLException {
+		if ((cardNo != null) && (cardNo > 0)){
+			Integer num =  bodao.getBorrowersCountByPk(cardNo);
 			if(num > 0){
 				return "Logged in successfully!";
 			}else{

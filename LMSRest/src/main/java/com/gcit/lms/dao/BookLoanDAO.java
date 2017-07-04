@@ -146,10 +146,6 @@ public class BookLoanDAO extends BaseDAO implements ResultSetExtractor<List<Book
 		return template.query("select * from tbl_book_loans", this);
 	}
 	
-	public List<BookLoan> readAllBookLoansByBorrower(Borrower borrower) throws SQLException{
-		return template.query("select * from tbl_book_loans where cardNo = ?", new Object[]{borrower.getCardNo()}, this);
-	}
-	
 	public List<BookLoan> readOutBookLoansByBorrowerCardNo(Integer cardNo) throws SQLException{
 		List<BookLoan> bookLoans =  template.query("select * from tbl_book_loans where cardNo = ? and dateIn IS NULL", new Object[]{cardNo}, this);
 		return bookLoans;
@@ -161,6 +157,10 @@ public class BookLoanDAO extends BaseDAO implements ResultSetExtractor<List<Book
 	
 	public List<BookLoan> readAllBookLoansByCardNo(Integer cardNo) throws SQLException{
 		return template.query("select * from tbl_book_loans where cardNo = ?", new Object[]{cardNo}, this);
+	}
+	
+	public List<BookLoan> readAllBookLoansByBorrower(Borrower borrower) throws SQLException{
+		return template.query("select * from tbl_book_loans where cardNo = ?", new Object[]{borrower.getCardNo()}, this);
 	}
 	
 	public List<BookLoan> readAllBookLoansByBookId(Integer bookId) throws SQLException{
