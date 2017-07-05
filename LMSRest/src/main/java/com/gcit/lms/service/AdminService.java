@@ -1,3 +1,4 @@
+
 package com.gcit.lms.service;
 
 import java.sql.SQLException;
@@ -113,6 +114,12 @@ public class AdminService {
 	public String addAuthor(@RequestBody Author author) throws SQLException {
 		adao.addAuthor(author);
 		return "Author Added - Success is in the AIR!";
+	}
+	
+	@Transactional
+	@RequestMapping(value = "/saveAuthorWithID", method = RequestMethod.POST, consumes="application/json")
+	public Integer saveAuthorWithID(@RequestBody Author author) throws SQLException {
+			return adao.addAuthorWithID(author);
 	}
 	
 	@RequestMapping(value = "editAuthor", method = RequestMethod.POST, 
